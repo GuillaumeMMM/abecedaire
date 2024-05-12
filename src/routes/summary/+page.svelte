@@ -11,7 +11,7 @@
 {/if}
 {#if data.dates.length > 0}
 	<ul>
-		{#each data.dates as date}
+		{#each data.dates.reverse() as date}
 			<SummaryLine {date} />
 		{/each}
 	</ul>
@@ -29,6 +29,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
+		max-width: 100%;
+		width: 300px;
 	}
 
 	.return-home {
