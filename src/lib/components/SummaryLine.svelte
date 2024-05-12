@@ -16,6 +16,25 @@
 			day: 'numeric'
 		})}
 		{#if summary}
-			({summary.found.length}/{summary.total}){/if}</a
+			({summary.found.length}/{summary.total}){/if}
+
+		<span aria-hidden="true">➡️</span></a
 	>
 </li>
+
+<style>
+	li > a:hover {
+		background-color: #dee2e6;
+	}
+
+	li > a {
+		color: inherit;
+		text-decoration: none;
+
+		display: flex;
+		justify-content: space-between;
+		border: 2px solid #adb5bd;
+		padding: 0.5rem 1rem;
+		border-radius: 0.2rem;
+	}
+</style>
