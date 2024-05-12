@@ -17,6 +17,7 @@
 		padding: 1rem;
 		height: 100%;
 		text-align: center;
+		padding: 1rem;
 	}
 
 	h1 {
