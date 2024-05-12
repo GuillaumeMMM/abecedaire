@@ -1,0 +1,46 @@
+.abc-title {
+    font-size: 4rem;
+    font-weight: 500;
+}
+
+.abc-title-2 {
+    font-size: 2rem;
+    font-weight: 500;
+}
+
+.abc-cta {
+    display: inline-block;
+    border: 2px solid #495057;
+    color: inherit;
+    padding: 0.5rem 1rem;
+    border-radius: 0.3rem;
+    text-decoration: none;
+    background-color: #e9ecef;
+    cursor: pointer;
+    font-size: inherit;
+}
+
+.abc-cta:focus-visible, .abc-input:focus-visible {
+    outline: 2px solid black;
+    outline-offset: 2px;
+}
+
+.abc-cta-secondary {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #e9ecef;
+}
+
+.abc-cta:hover {
+    background-color: white;
+}
+
+.abc-cta-secondary:hover {
+    background-color: #6c757d;
+}
+
+.abc-input {
+    padding: 0.5rem;
+    font-size: 16px;
+    border-radius: 0.3rem;
+}
