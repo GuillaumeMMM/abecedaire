@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { Game } from '$lib/types/Game';
+	import { FirstLetter, type Game } from '$lib/types/Game';
 	import type { Summary } from '$lib/types/Summary';
 	import { browser } from '$app/environment';
 	import GameSuccess from './GameSuccess.svelte';
@@ -12,19 +12,25 @@
 	let currentValueTypes = '';
 	let currentValueError = '';
 
-	const summaryStr = browser ? localStorage.getItem(`abc-summary-${date}`) : null;
+	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-test-${date}`) : null;
 	const summary: Summary | null = summaryStr ? JSON.parse(summaryStr) : null;
 
 	$: isToday = new Date(date).setHours(0, 0, 0, 0) == new Date().setHours(0, 0, 0, 0);
 
-	let foundElements: string[] = summary?.found ?? [];
-	$: timeSpent = summary?.duration ?? 0;
+	let foundElements: { [key in FirstLetter]?: string } = summary?.found ?? {};
+	$: timeLeft = summary?.duration ?? 300;
 
-	$: isGameSuccess = foundElements.length === game.values.length;
+	$: gameFirstLetters = Object.keys(game.values) as FirstLetter[];
+	$: missingFirstLetters = (Object.keys(FirstLetter) as FirstLetter[]).filter(
+		(letter) => !gameFirstLetters.includes(letter)
+	);
+	$: foundFirstLetters = Object.keys(foundElements) as FirstLetter[];
+
+	$: isGameSuccess = foundFirstLetters.length === gameFirstLetters.length || timeLeft === 0;
 
 	setInterval(() => {
 		if (!isGameSuccess) {
-			timeSpent += 1;
+			timeLeft -= 1;
 			updateLSSummary();
 		}
 	}, 1000);
@@ -34,12 +40,12 @@
 	function updateLSSummary() {
 		if (browser) {
 			localStorage.setItem(
-				`abc-summary-${date}`,
+				`abc-summary-data-test-${date}`,
 				JSON.stringify({
 					found: foundElements,
 					date: date,
-					total: game.values.length,
-					duration: timeSpent
+					total: gameFirstLetters.length,
+					duration: timeLeft
 				})
 			);
 		}
@@ -96,8 +102,9 @@
 	}
 
 	function isValidInput(input: string) {
-		for (const value of game.values) {
-			if (!foundElements.includes(value) && isMatch(input, value)) {
+		const firstLetter = input[0].toUpperCase();
+		for (const value of game.values[firstLetter as FirstLetter]) {
+			if (!foundElements[firstLetter as FirstLetter]?.includes(value) && isMatch(input, value)) {
 				return value;
 			}
 		}
@@ -105,14 +112,14 @@
 	}
 
 	function isGameFinished() {
-		return foundElements.length === game.values.length;
+		return foundFirstLetters.length === gameFirstLetters.length;
 	}
 
 	function onSubmit(event: Event) {
 		event.preventDefault();
 		const matchingValue = isValidInput(currentValueTypes);
 		if (matchingValue !== null) {
-			foundElements = [...foundElements, matchingValue];
+			foundElements[matchingValue[0] as FirstLetter] = matchingValue;
 			currentValueTypes = '';
 			currentValueError = '';
 			updateLSSummary();
@@ -139,28 +146,36 @@
 			})}`}
 </h1>
 <div class="instructions">
-	<p>
-		Temps écoulé : {intlTimeFormater(Math.trunc(timeSpent / 60))}:{intlTimeFormater(timeSpent % 60)}
+	<p class="rules">
+		Trouvez <span class="rules-theme"
+			>{game.categoryGender === 'f' ? 'une' : 'un'} {game.category}</span
+		>
+		commençant par chaque lettre de l'alphabet {#if missingFirstLetters.length > 0}
+			<span>
+				(à part les lettres{#each missingFirstLetters as letter}
+					&nbsp;{letter}{/each}) qui n'ont pas de solution</span
+			>{/if}.
 	</p>
-	<p>
-		Trouvez {game.categoryGender === 'f' ? 'toutes' : 'tous'} les {game.categoryPlural} commençant par
-		la lettre {game.letter}.
+	<p class="timer">
+		Temps restant : {intlTimeFormater(Math.trunc(timeLeft / 60))}:{intlTimeFormater(timeLeft % 60)}
 	</p>
 </div>
-<GameProgression foundCount={foundElements.length} totalCount={game.values.length} />
+<GameProgression foundCount={foundFirstLetters.length} totalCount={gameFirstLetters.length} />
 {#if isGameSuccess}
 	<GameSuccess />
 {/if}
 <ul class="found-list">
-	{#each foundElements as found}
+	{#each foundFirstLetters as found}
 		<li>
-			<div class="found-item-content">{found} <span aria-hidden="true">✅</span></div>
+			<div class="found-item-content">
+				{foundElements[found]} <span aria-hidden="true">✅</span>
+			</div>
 		</li>
 	{/each}
 </ul>
 <form on:submit={onSubmit}>
 	{#if !isGameSuccess}
-		<label for="current-value">Entrez un {game.category} en {game.letter} </label>
+		<label for="current-value">Renseignez un {game.category}</label>
 		<div class="input-container">
 			<input
 				type="text"
@@ -190,6 +205,21 @@
 
 	.instructions {
 		margin: 1rem 0;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.rules {
+		overflow-wrap: anywhere;
+	}
+
+	.rules-theme {
+		font-weight: 600;
+	}
+
+	.timer {
+		font-weight: 600;
 	}
 
 	.found-list li {

@@ -4,7 +4,7 @@
 
 	export let date: string;
 
-	const summaryStr = browser ? localStorage.getItem(`abc-summary-${date}`) : null;
+	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-test-${date}`) : null;
 	const summary: Summary | null = summaryStr ? JSON.parse(summaryStr) : null;
 </script>
 
@@ -16,7 +16,7 @@
 			day: 'numeric'
 		})}
 		{#if summary}
-			({summary.found.length}/{summary.total}){/if}
+			({Object.keys(summary.found).length}/{summary.total}){/if}
 
 		<span aria-hidden="true">➡️</span></a
 	>
