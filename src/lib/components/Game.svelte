@@ -174,6 +174,8 @@
 				on:input={onCurrentValueInput}
 				aria-invalid={Boolean(currentValueError)}
 				aria-describedby="current-value-error"
+				autocorrect="off"
+				autocomplete="off"
 			/>
 			<button type="submit" class="abc-cta">Valider</button>
 		</div>
