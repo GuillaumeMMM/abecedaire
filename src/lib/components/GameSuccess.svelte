@@ -16,7 +16,7 @@
 
 	$: copied = false;
 
-	const resultsSummary = `${foundFirstLetters.length} ${foundFirstLetters.length === 1 ? `${game.category} trouvé` : `${game.categoryPlural} trouvés`} en ${intlTimeFormater(Math.trunc(timeSpent / 60))}:${intlTimeFormater(timeSpent % 60)}`;
+	const resultsSummary = `${foundFirstLetters.length} ${foundFirstLetters.length === 1 ? `${game.category} trouvé${game.categoryGender === 'f' ? 'e' : ''}` : `${game.categoryPlural} trouvé${game.categoryGender === 'f' ? 'e' : ''}s`} en ${intlTimeFormater(Math.trunc(timeSpent / 60))}:${intlTimeFormater(timeSpent % 60)}`;
 
 	const emojiResults = allLetters.map((letter) => {
 		if (foundFirstLetters.includes(letter)) {

@@ -6,7 +6,7 @@
 	import GameSuccess from './GameSuccess.svelte';
 	import GameProgression from './GameProgression.svelte';
 	import { GAME_TIME_LENGTH } from '$lib/constants';
-	import { formatDate, intlTimeFormater } from '$lib/utils';
+	import { formatDate, intlTimeFormater, normalizeString } from '$lib/utils';
 
 	export let game: Game;
 	export let date: string;
@@ -26,7 +26,9 @@
 	$: missingFirstLetters = (Object.keys(FirstLetter) as FirstLetter[]).filter(
 		(letter) => !gameFirstLetters.includes(letter)
 	);
-	$: foundFirstLetters = Object.keys(foundElements) as FirstLetter[];
+	$: foundFirstLetters = Object.keys(foundElements)
+		.map(normalizeString)
+		.sort((a, b) => (a > b ? 1 : -1)) as FirstLetter[];
 
 	$: isGameSuccess = foundFirstLetters.length === gameFirstLetters.length || timeLeft <= 0;
 
@@ -87,22 +89,11 @@
 	}
 
 	function isMatch(str: string, alias: string) {
-		return (
-			similarity(
-				alias
-					.toLowerCase()
-					.normalize('NFD')
-					.replace(/\p{Diacritic}/gu, ''),
-				str
-					.toLowerCase()
-					.normalize('NFD')
-					.replace(/\p{Diacritic}/gu, '')
-			) > 0.87
-		);
+		return similarity(normalizeString(alias), normalizeString(str)) > 0.87;
 	}
 
 	function isValidInput(input: string) {
-		const firstLetter = input[0].toUpperCase();
+		const firstLetter = normalizeString(input[0]);
 		for (const value of game.values[firstLetter as FirstLetter]) {
 			if (!foundElements[firstLetter as FirstLetter]?.includes(value) && isMatch(input, value)) {
 				return value;
@@ -119,7 +110,7 @@
 		event.preventDefault();
 		const matchingValue = isValidInput(currentValueTypes);
 		if (matchingValue !== null) {
-			foundElements[matchingValue[0] as FirstLetter] = matchingValue;
+			foundElements[normalizeString(matchingValue[0]) as FirstLetter] = matchingValue;
 			currentValueTypes = '';
 			currentValueError = '';
 			updateLSSummary();
@@ -146,7 +137,7 @@
 		>
 		commençant par chaque lettre de l'alphabet {#if missingFirstLetters.length > 0}
 			<span>
-				(à part les lettres{#each missingFirstLetters as letter}
+				(à part {#if missingFirstLetters.length > 1}les lettres{:else}la lettre{/if}{#each missingFirstLetters as letter}
 					&nbsp;{letter}{/each} qui n'ont pas de solution)</span
 			>{/if}.
 	</p>
@@ -171,7 +162,9 @@
 		{/each}
 	</ul>
 	<form on:submit={onSubmit}>
-		<label for="current-value">Renseignez un {game.category}</label>
+		<label for="current-value"
+			>Renseignez {game.categoryGender === 'm' ? 'un' : 'une'} {game.category}</label
+		>
 		<div class="input-container">
 			<input
 				type="text"

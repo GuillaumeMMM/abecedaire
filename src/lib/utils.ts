@@ -5,3 +5,7 @@ export const formatDate = (date: string) => new Date(date).toLocaleDateString('f
     month: 'long',
     day: 'numeric'
 })
+
+export const normalizeString = (str: string) => str.toUpperCase()
+.normalize('NFD')
+.replace(/\p{Diacritic}/gu, '')
