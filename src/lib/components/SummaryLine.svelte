@@ -1,20 +1,18 @@
 <script lang="ts">
 	import type { Summary } from '$lib/types/Summary';
 	import { browser } from '$app/environment';
+	import { formatDate } from '$lib/utils';
 
 	export let date: string;
 
 	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-test-${date}`) : null;
 	const summary: Summary | null = summaryStr ? JSON.parse(summaryStr) : null;
+	const isComplete = summary && Object.keys(summary.found).length / summary.total === 1;
 </script>
 
 <li>
-	<a href={`/game/${date}`}
-		>{new Date(date).toLocaleDateString('fr-FR', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric'
-		})}
+	<a href={`/game/${date}`} class={isComplete ? 'complete' : ''}
+		>{formatDate(date)}
 		{#if summary}
 			({Object.keys(summary.found).length}/{summary.total}){/if}
 
@@ -24,7 +22,7 @@
 
 <style>
 	li > a:hover {
-		background-color: #dee2e6;
+		background-color: #e9f2fc;
 	}
 
 	li > a {
@@ -36,5 +34,10 @@
 		border: 2px solid #adb5bd;
 		padding: 0.5rem 1rem;
 		border-radius: 0.2rem;
+	}
+
+	.complete {
+		border-color: #17ba32;
+		background-color: #17ba3214;
 	}
 </style>

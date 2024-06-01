@@ -5,6 +5,8 @@
 	import { browser } from '$app/environment';
 	import GameSuccess from './GameSuccess.svelte';
 	import GameProgression from './GameProgression.svelte';
+	import { GAME_TIME_LENGTH } from '$lib/constants';
+	import { formatDate, intlTimeFormater } from '$lib/utils';
 
 	export let game: Game;
 	export let date: string;
@@ -18,7 +20,7 @@
 	$: isToday = new Date(date).setHours(0, 0, 0, 0) == new Date().setHours(0, 0, 0, 0);
 
 	let foundElements: { [key in FirstLetter]?: string } = summary?.found ?? {};
-	$: timeLeft = summary?.duration ?? 300;
+	$: timeLeft = summary?.duration ?? GAME_TIME_LENGTH;
 
 	$: gameFirstLetters = Object.keys(game.values) as FirstLetter[];
 	$: missingFirstLetters = (Object.keys(FirstLetter) as FirstLetter[]).filter(
@@ -26,7 +28,7 @@
 	);
 	$: foundFirstLetters = Object.keys(foundElements) as FirstLetter[];
 
-	$: isGameSuccess = foundFirstLetters.length === gameFirstLetters.length || timeLeft === 0;
+	$: isGameSuccess = foundFirstLetters.length === gameFirstLetters.length || timeLeft <= 0;
 
 	setInterval(() => {
 		if (!isGameSuccess) {
@@ -34,8 +36,6 @@
 			updateLSSummary();
 		}
 	}, 1000);
-
-	const intlTimeFormater = new Intl.NumberFormat('fr-FR', { minimumIntegerDigits: 2 }).format;
 
 	function updateLSSummary() {
 		if (browser) {
@@ -137,13 +137,7 @@
 </script>
 
 <h1 class="abc-title-2">
-	Abécédaire {isToday
-		? 'du jour'
-		: `du ${new Date(date).toLocaleDateString('fr-FR', {
-				year: 'numeric',
-				month: 'long',
-				day: 'numeric'
-			})}`}
+	Abécédaire {isToday ? 'du jour' : `du ${formatDate(date)}`}
 </h1>
 <div class="instructions">
 	<p class="rules">
@@ -153,28 +147,30 @@
 		commençant par chaque lettre de l'alphabet {#if missingFirstLetters.length > 0}
 			<span>
 				(à part les lettres{#each missingFirstLetters as letter}
-					&nbsp;{letter}{/each}) qui n'ont pas de solution</span
+					&nbsp;{letter}{/each} qui n'ont pas de solution)</span
 			>{/if}.
 	</p>
 	<p class="timer">
 		Temps restant : {intlTimeFormater(Math.trunc(timeLeft / 60))}:{intlTimeFormater(timeLeft % 60)}
 	</p>
 </div>
-<GameProgression foundCount={foundFirstLetters.length} totalCount={gameFirstLetters.length} />
-{#if isGameSuccess}
-	<GameSuccess />
+{#if !isGameSuccess}
+	<GameProgression foundCount={foundFirstLetters.length} totalCount={gameFirstLetters.length} />
 {/if}
-<ul class="found-list">
-	{#each foundFirstLetters as found}
-		<li>
-			<div class="found-item-content">
-				{foundElements[found]} <span aria-hidden="true">✅</span>
-			</div>
-		</li>
-	{/each}
-</ul>
-<form on:submit={onSubmit}>
-	{#if !isGameSuccess}
+{#if isGameSuccess}
+	<GameSuccess {timeLeft} {foundFirstLetters} {gameFirstLetters} {game} {date} />
+{/if}
+{#if !isGameSuccess}
+	<ul class="found-list">
+		{#each foundFirstLetters as found}
+			<li>
+				<div class="found-item-content">
+					{foundElements[found]} <span aria-hidden="true">✅</span>
+				</div>
+			</li>
+		{/each}
+	</ul>
+	<form on:submit={onSubmit}>
 		<label for="current-value">Renseignez un {game.category}</label>
 		<div class="input-container">
 			<input
@@ -188,19 +184,19 @@
 			/>
 			<button type="submit" class="abc-cta">Valider</button>
 		</div>
-	{/if}
 
-	{#if currentValueError && !isGameSuccess}
-		<p role="alert" class="alert">{currentValueError}</p>
-	{/if}
-</form>
+		{#if currentValueError}
+			<p role="alert" class="alert">{currentValueError}</p>
+		{/if}
+	</form>
+{/if}
 <a href="/" class="abc-cta return-home"
 	><span aria-hidden="true">⬅️&nbsp;&nbsp;</span>Retour à l'accueil</a
 >
 
 <style>
 	h1 {
-		margin-bottom: 2rem;
+		margin-bottom: 1rem;
 	}
 
 	.instructions {

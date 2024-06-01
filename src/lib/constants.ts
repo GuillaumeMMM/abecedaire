@@ -1,0 +1,1 @@
+export const GAME_TIME_LENGTH = 300
