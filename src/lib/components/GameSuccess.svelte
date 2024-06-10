@@ -65,7 +65,7 @@
 
 <style>
 	.results-date {
-		font-weight: 600;
+		font-weight: 500;
 	}
 
 	.results-congrats {

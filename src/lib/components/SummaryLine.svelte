@@ -5,7 +5,7 @@
 
 	export let date: string;
 
-	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-test-${date}`) : null;
+	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-${date}`) : null;
 	const summary: Summary | null = summaryStr ? JSON.parse(summaryStr) : null;
 	const isComplete = summary && Object.keys(summary.found).length / summary.total === 1;
 </script>
@@ -22,7 +22,7 @@
 
 <style>
 	li > a:hover {
-		background-color: #e9f2fc;
+		background-color: transparent;
 	}
 
 	li > a {
@@ -31,7 +31,8 @@
 
 		display: flex;
 		justify-content: space-between;
-		border: 2px solid #adb5bd;
+		border: 2px solid var(--primary-color);
+		background-color: var(--primary-color-light);
 		padding: 0.5rem 1rem;
 		border-radius: 0.2rem;
 	}

@@ -1,7 +1,11 @@
 <div class="home">
 	<div class="home-content">
 		<h1 class="abc-title">Abécédaire</h1>
-		<p>Chaque jour, trouvez un mot d'un thème donnée pour chaque lettre de l'alphabet</p>
+		<p>
+			Chaque jour vous avez <span class="bold">5 minutes</span> pour trouver un mot commençant par
+			<span class="bold">chaque lettre de l'alphabet</span>
+			pour un thème donné
+		</p>
 		<div class="actions">
 			<a class="abc-cta" href="./game">Jouer</a>
 			<a class="abc-cta" href="./summary">Jours précédents</a>
@@ -20,6 +24,11 @@
 		padding: 1rem;
 	}
 
+	.bold {
+		font-weight: 500;
+		color: var(--primary-color);
+	}
+
 	h1 {
 		margin-bottom: 1rem;
 	}
@@ -34,5 +43,6 @@
 		align-items: center;
 		justify-content: center;
 		gap: 1rem;
+		flex-wrap: wrap;
 	}
 </style>

@@ -1,3 +1,8 @@
+body {
+    --primary-color: rgb(76, 0, 255);
+    --primary-color-light: rgb(242, 237, 253);
+}
+
 .abc-title {
     font-size: 4rem;
     font-weight: 500;
@@ -6,16 +11,17 @@
 .abc-title-2 {
     font-size: 2rem;
     font-weight: 500;
+    color: var(--primary-color);
 }
 
 .abc-cta {
     display: inline-block;
-    border: 2px solid #495057;
+    border: 2px solid var(--primary-color);
     color: inherit;
     padding: 0.5rem 1rem;
     border-radius: 0.3rem;
     text-decoration: none;
-    background-color: #e9ecef;
+    background-color: var(--primary-color-light);
     cursor: pointer;
     font-size: inherit;
 }
@@ -43,6 +49,7 @@
     padding: 0.5rem;
     font-size: 16px;
     border-radius: 0.3rem;
+    border-color: var(--primary-color);
 }
 
 @media screen and (max-width: 30rem) {

@@ -7,6 +7,7 @@
 	import GameProgression from './GameProgression.svelte';
 	import { GAME_TIME_LENGTH } from '$lib/constants';
 	import { formatDate, intlTimeFormater, normalizeString } from '$lib/utils';
+	import { onDestroy, onMount } from 'svelte';
 
 	export let game: Game;
 	export let date: string;
@@ -14,7 +15,7 @@
 	let currentValueTypes = '';
 	let currentValueError = '';
 
-	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-test-${date}`) : null;
+	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-${date}`) : null;
 	const summary: Summary | null = summaryStr ? JSON.parse(summaryStr) : null;
 
 	$: isToday = new Date(date).setHours(0, 0, 0, 0) == new Date().setHours(0, 0, 0, 0);
@@ -32,17 +33,29 @@
 
 	$: isGameSuccess = foundFirstLetters.length === gameFirstLetters.length || timeLeft <= 0;
 
-	setInterval(() => {
-		if (!isGameSuccess) {
-			timeLeft -= 1;
-			updateLSSummary();
-		}
-	}, 1000);
+	let interval: ReturnType<typeof setInterval>;
+
+	function startInterval() {
+		interval = setInterval(() => {
+			if (!isGameSuccess) {
+				timeLeft -= 1;
+				updateLSSummary();
+			}
+		}, 1000);
+	}
+
+	onMount(() => {
+		startInterval();
+	});
+
+	onDestroy(() => {
+		clearInterval(interval);
+	});
 
 	function updateLSSummary() {
 		if (browser) {
 			localStorage.setItem(
-				`abc-summary-data-test-${date}`,
+				`abc-summary-data-${date}`,
 				JSON.stringify({
 					found: foundElements,
 					date: date,
@@ -88,15 +101,21 @@
 		return costs[s2.length];
 	}
 
-	function isMatch(str: string, alias: string) {
-		return similarity(normalizeString(alias), normalizeString(str)) > 0.87;
+	function isMatch(str: string, aliases: string[]) {
+		return aliases.some((alias) => similarity(normalizeString(alias), normalizeString(str)) > 0.87);
 	}
 
 	function isValidInput(input: string) {
-		const firstLetter = normalizeString(input[0]);
-		for (const value of game.values[firstLetter as FirstLetter]) {
-			if (!foundElements[firstLetter as FirstLetter]?.includes(value) && isMatch(input, value)) {
-				return value;
+		if (!input) {
+			return null;
+		}
+		const firstLetter = normalizeString(input[0]) as FirstLetter;
+		for (const value of game.values[firstLetter] ?? []) {
+			if (
+				!foundElements[firstLetter]?.includes(value.label) &&
+				isMatch(input, value.aliases ?? [value.label])
+			) {
+				return value.label;
 			}
 		}
 		return null;
@@ -128,7 +147,7 @@
 </script>
 
 <h1 class="abc-title-2">
-	Abécédaire {isToday ? 'du jour' : `du ${formatDate(date)}`}
+	Petit bac {isToday ? 'du jour' : `du ${formatDate(date)}`}
 </h1>
 <div class="instructions">
 	<p class="rules">
@@ -138,29 +157,17 @@
 		commençant par chaque lettre de l'alphabet {#if missingFirstLetters.length > 0}
 			<span>
 				(à part {#if missingFirstLetters.length > 1}les lettres{:else}la lettre{/if}{#each missingFirstLetters as letter}
-					&nbsp;{letter}{/each} qui n'ont pas de solution)</span
+					&nbsp;{letter}{/each} qui n'{#if missingFirstLetters.length > 1}ont{:else}a{/if} pas de solution)</span
 			>{/if}.
 	</p>
-	<p class="timer">
+	<p class={`timer ${timeLeft < 60 ? 'low' : ''}`}>
 		Temps restant : {intlTimeFormater(Math.trunc(timeLeft / 60))}:{intlTimeFormater(timeLeft % 60)}
 	</p>
 </div>
-{#if !isGameSuccess}
-	<GameProgression foundCount={foundFirstLetters.length} totalCount={gameFirstLetters.length} />
-{/if}
 {#if isGameSuccess}
 	<GameSuccess {timeLeft} {foundFirstLetters} {gameFirstLetters} {game} {date} />
 {/if}
 {#if !isGameSuccess}
-	<ul class="found-list">
-		{#each foundFirstLetters as found}
-			<li>
-				<div class="found-item-content">
-					{foundElements[found]} <span aria-hidden="true">✅</span>
-				</div>
-			</li>
-		{/each}
-	</ul>
 	<form on:submit={onSubmit}>
 		<label for="current-value"
 			>Renseignez {game.categoryGender === 'm' ? 'un' : 'une'} {game.category}</label
@@ -184,6 +191,16 @@
 			<p role="alert" class="alert">{currentValueError}</p>
 		{/if}
 	</form>
+	<GameProgression foundCount={foundFirstLetters.length} totalCount={gameFirstLetters.length} />
+	<ul class="found-list">
+		{#each foundFirstLetters as found}
+			<li>
+				<div class="found-item-content">
+					{foundElements[found]} <span aria-hidden="true">✅</span>
+				</div>
+			</li>
+		{/each}
+	</ul>
 {/if}
 <a href="/" class="abc-cta return-home"
 	><span aria-hidden="true">⬅️&nbsp;&nbsp;</span>Retour à l'accueil</a
@@ -206,11 +223,15 @@
 	}
 
 	.rules-theme {
-		font-weight: 600;
+		font-weight: 500;
 	}
 
 	.timer {
-		font-weight: 600;
+		font-weight: 500;
+	}
+
+	.timer.low {
+		color: rgb(238, 1, 60);
 	}
 
 	.found-list li {

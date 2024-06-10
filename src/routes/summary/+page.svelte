@@ -7,7 +7,9 @@
 <h1 class="abc-title-2">Résumé des parties</h1>
 {#if data.dates.length === 0}
 	<p>Vous n'avez aucun score enregistré pour le moment.</p>
-	<a href="/game">Lancer la partie du jour</a>
+	<div>
+		<a href="/game">Lancer la partie du jour</a>
+	</div>
 {/if}
 {#if data.dates.length > 0}
 	<ul>
