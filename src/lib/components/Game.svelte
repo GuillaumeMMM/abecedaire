@@ -6,7 +6,7 @@
 	import GameSuccess from './GameSuccess.svelte';
 	import GameProgression from './GameProgression.svelte';
 	import { GAME_TIME_LENGTH } from '$lib/constants';
-	import { formatDate, intlTimeFormater, normalizeString } from '$lib/utils';
+	import { formatDate, intlTimeFormater, isValidInput, normalizeString } from '$lib/utils';
 	import { onDestroy, onMount } from 'svelte';
 
 	export let game: Game;
@@ -14,6 +14,7 @@
 
 	let currentValueTypes = '';
 	let currentValueError = '';
+	let currentValueWarning = '';
 
 	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-${date}`) : null;
 	const summary: Summary | null = summaryStr ? JSON.parse(summaryStr) : null;
@@ -66,78 +67,35 @@
 		}
 	}
 
-	function similarity(s1: string, s2: string) {
-		let longer = s1;
-		let shorter = s2;
-		if (s1.length < s2.length) {
-			longer = s2;
-			shorter = s1;
-		}
-		const longerLength = longer.length;
-		if (longerLength == 0) {
-			return 1.0;
-		}
-		return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString());
-	}
-
-	function editDistance(s1: string, s2: string) {
-		const costs = new Array();
-		for (let i = 0; i <= s1.length; i++) {
-			let lastValue = i;
-			for (let j = 0; j <= s2.length; j++) {
-				if (i == 0) costs[j] = j;
-				else {
-					if (j > 0) {
-						let newValue = costs[j - 1];
-						if (s1.charAt(i - 1) != s2.charAt(j - 1))
-							newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-						costs[j - 1] = lastValue;
-						lastValue = newValue;
-					}
-				}
-			}
-			if (i > 0) costs[s2.length] = lastValue;
-		}
-		return costs[s2.length];
-	}
-
-	function isMatch(str: string, aliases: string[]) {
-		return aliases.some((alias) => similarity(normalizeString(alias), normalizeString(str)) > 0.87);
-	}
-
-	function isValidInput(input: string) {
-		if (!input) {
-			return null;
-		}
-		const firstLetter = normalizeString(input[0]) as FirstLetter;
-		for (const value of game.values[firstLetter] ?? []) {
-			if (
-				!foundElements[firstLetter]?.includes(value.label) &&
-				isMatch(input, value.aliases ?? [value.label])
-			) {
-				return value.label;
-			}
-		}
-		return null;
-	}
-
 	function isGameFinished() {
 		return foundFirstLetters.length === gameFirstLetters.length;
 	}
 
 	function onSubmit(event: Event) {
 		event.preventDefault();
-		const matchingValue = isValidInput(currentValueTypes);
-		if (matchingValue !== null) {
-			foundElements[normalizeString(matchingValue[0]) as FirstLetter] = matchingValue;
-			currentValueTypes = '';
-			currentValueError = '';
-			updateLSSummary();
-			if (isGameFinished()) {
-				goto('game/success');
-			}
-		} else {
+		const matchingValue = isValidInput(
+			currentValueTypes,
+			foundFirstLetters,
+			missingFirstLetters,
+			game.values,
+			foundElements
+		);
+		currentValueTypes = '';
+		currentValueError = '';
+		currentValueWarning = '';
+		if (matchingValue.type === 'error') {
 			currentValueError = 'Proposition invalide';
+			return;
+		}
+		if (matchingValue.type === 'warning') {
+			currentValueWarning = matchingValue.value ?? '';
+			return;
+		}
+		const firstLetter = (matchingValue.value ?? '')[0];
+		foundElements[normalizeString(firstLetter) as FirstLetter] = matchingValue.value ?? '';
+		updateLSSummary();
+		if (isGameFinished()) {
+			goto('game/success');
 		}
 	}
 
@@ -154,12 +112,14 @@
 		Trouvez <span class="rules-theme"
 			>{game.categoryGender === 'f' ? 'une' : 'un'} {game.category}</span
 		>
-		commençant par chaque lettre de l'alphabet {#if missingFirstLetters.length > 0}
-			<span>
-				(à part {#if missingFirstLetters.length > 1}les lettres{:else}la lettre{/if}{#each missingFirstLetters as letter}
-					&nbsp;{letter}{/each} qui n'{#if missingFirstLetters.length > 1}ont{:else}a{/if} pas de solution)</span
-			>{/if}.
+		commençant par chaque lettre de l'alphabet.
 	</p>
+	{#if missingFirstLetters.length > 0}
+		<p>
+			<span aria-hidden="true">⚠️</span>&nbsp;À part {#if missingFirstLetters.length > 1}les lettres{:else}la
+				lettre{/if}{#each missingFirstLetters as letter}
+				&nbsp;{letter}{/each} qui n'{#if missingFirstLetters.length > 1}ont{:else}a{/if} pas de solution
+		</p>{/if}
 	<p class={`timer ${timeLeft < 60 ? 'low' : ''}`}>
 		Temps restant : {intlTimeFormater(Math.trunc(timeLeft / 60))}:{intlTimeFormater(timeLeft % 60)}
 	</p>
@@ -189,6 +149,9 @@
 
 		{#if currentValueError}
 			<p role="alert" class="alert">{currentValueError}</p>
+		{/if}
+		{#if currentValueWarning}
+			<p role="alert" class="warning">{currentValueWarning}</p>
 		{/if}
 	</form>
 	<GameProgression foundCount={foundFirstLetters.length} totalCount={gameFirstLetters.length} />
@@ -274,6 +237,11 @@
 
 	.alert {
 		color: red;
+		margin-top: 5px;
+	}
+
+	.warning {
+		color: var(--primary-color);
 		margin-top: 5px;
 	}
 
