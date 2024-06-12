@@ -19,6 +19,8 @@
 	const summaryStr = browser ? localStorage.getItem(`abc-summary-data-${date}`) : null;
 	const summary: Summary | null = summaryStr ? JSON.parse(summaryStr) : null;
 
+	const allLetters: FirstLetter[] = Object.values(FirstLetter);
+
 	$: isToday = new Date(date).setHours(0, 0, 0, 0) == new Date().setHours(0, 0, 0, 0);
 
 	let foundElements: { [key in FirstLetter]?: string } = summary?.found ?? {};
@@ -80,9 +82,11 @@
 			game.values,
 			foundElements
 		);
-		currentValueTypes = '';
 		currentValueError = '';
 		currentValueWarning = '';
+		const firstLetter = (currentValueTypes ?? '')[0];
+		currentValueTypes = '';
+
 		if (matchingValue.type === 'error') {
 			currentValueError = 'Proposition invalide';
 			return;
@@ -91,7 +95,6 @@
 			currentValueWarning = matchingValue.value ?? '';
 			return;
 		}
-		const firstLetter = (matchingValue.value ?? '')[0];
 		foundElements[normalizeString(firstLetter) as FirstLetter] = matchingValue.value ?? '';
 		updateLSSummary();
 		if (isGameFinished()) {
@@ -156,12 +159,26 @@
 	</form>
 	<GameProgression foundCount={foundFirstLetters.length} totalCount={gameFirstLetters.length} />
 	<ul class="found-list">
-		{#each foundFirstLetters as found}
-			<li>
-				<div class="found-item-content">
-					{foundElements[found]} <span aria-hidden="true">✅</span>
-				</div>
-			</li>
+		{#each allLetters as letter}
+			{#if foundFirstLetters.includes(letter)}
+				<li>
+					<div class="found-item-content">
+						<div><span class="found-item-letter">{letter}</span> {foundElements[letter]}</div>
+						<span aria-hidden="true">✅</span>
+					</div>
+				</li>
+			{/if}
+			{#if missingFirstLetters.includes(letter)}
+				<li>
+					<div class="missing-item-content">
+						<div>
+							<span class="found-item-letter">{letter}</span>
+							<span class="missing-item-text">Pas de solutions</span>
+						</div>
+						<span aria-hidden="true">⚪</span>
+					</div>
+				</li>
+			{/if}
 		{/each}
 	</ul>
 {/if}
@@ -215,6 +232,24 @@
 		border-radius: 0.2rem;
 	}
 
+	.missing-item-content {
+		display: flex;
+		justify-content: space-between;
+		border: 2px solid #b2b2b2;
+		padding: 0.5rem 1rem;
+		border-radius: 0.2rem;
+	}
+
+	.missing-item-text {
+		color: rgb(108, 108, 108);
+		font-style: italic;
+		font-size: 0.9rem;
+	}
+
+	.missing-item-content:hover {
+		background-color: #f8f8f8;
+	}
+
 	form {
 		margin: 1rem 0;
 	}
@@ -247,5 +282,15 @@
 
 	.return-home {
 		margin-top: 2rem;
+	}
+
+	.found-item-letter {
+		background-color: var(--primary-color-light);
+		border-radius: 0.3rem;
+		padding: 1px 6px;
+		margin-right: 10px;
+		min-width: 0.8rem;
+		display: inline-block;
+		text-align: center;
 	}
 </style>

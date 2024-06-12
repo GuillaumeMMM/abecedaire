@@ -47,10 +47,13 @@ export function isValidInput(
 	}
 
 	for (const value of gameValues[firstLetter] ?? []) {
-		if (
-			!foundElements[firstLetter]?.includes(value.label) &&
-			isMatch(input, value.aliases ?? [value.label])
-		) {
+		if (Object.values(foundElements).some((val) => val === value.label)) {
+			return {
+				type: 'warning',
+				value: `Vous avez déjà donné cette solution pour une autre lettre`
+			};
+		}
+		if (isMatch(input, value.aliases ?? [value.label])) {
 			return { type: 'success', value: value.label };
 		}
 	}

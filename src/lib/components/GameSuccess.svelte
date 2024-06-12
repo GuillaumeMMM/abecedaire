@@ -29,7 +29,7 @@
 	});
 
 	function onCopyResults() {
-		const text = `Le ${formatDate(date)}\n${resultsSummary}\n${emojiResults.join('')}`;
+		const text = `Abécédaire du ${formatDate(date)}\n${resultsSummary}\nhttps://www.abecedaire.net/game/${date}\n${emojiResults.join('')}`;
 		navigator.clipboard.writeText(text).then(() => {
 			copied = true;
 		});
@@ -45,7 +45,9 @@
 
 <p class="results-label">Partagez vos résultats :</p>
 <div class="results">
-	<p class="results-date">Le {formatDate(date)}</p>
+	<p class="results-date">
+		<a href={`https://www.abecedaire.net/game/${date}`}>Abécédaire du {formatDate(date)}</a>
+	</p>
 	<p class="results-summary">
 		{resultsSummary}
 	</p>
